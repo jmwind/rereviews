@@ -40,10 +40,47 @@ const GET_PRODUCTS_BY_ID = gql`
   }
 `;
 
+const ADD_METAFIELDS_BY_ID = gql`
+  mutation($input: ProductInput!) {
+    productUpdate(input: $input) {
+      product {
+        metafields(first: 10) {
+          edges {
+            node {
+              id
+              namespace
+              key
+              value
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+const createMetafieldInput = (id, value) => {
+  const uuidv4 = Math.random().toString(36).substring(7);
+  return {
+    variables: {
+      input: {
+      id: id,
+      metafields:
+        [{
+          namespace: "rereviews",
+          key: uuidv4,
+          value: value,
+          valueType: "STRING"}
+        ]
+      }
+    }
+  };
+}
+
 const Metafields = (props) => {
   let fieldsList = props.metafields.edges.map((edge) => {
     return (
-      <div>
+      <div key={edge.node.key}>
         {edge.node.namespace + ", " + edge.node.key}
         <div>{edge.node.value}</div>
       </div>
@@ -62,6 +99,7 @@ const Metafields = (props) => {
 
 const Index = () => {
   const { loading, error, data } = useQuery(GET_PRODUCTS_BY_ID);
+  const [addPublicMetafield,  { mutationData }] = useMutation(ADD_METAFIELDS_BY_ID);
 
   if(loading) return <div>Loading...</div>;
   if(error) return <div>Error {error.message}</div>;
@@ -73,6 +111,7 @@ const Index = () => {
         title="ReReviews"
         primaryAction={{
           content: 'Add Review...',
+          onAction: () => addPublicMetafield(createMetafieldInput("gid://shopify/Product/6586388578386", "some review that no one created"))
         }}
       />
       <Card>
