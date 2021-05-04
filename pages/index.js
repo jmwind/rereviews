@@ -88,12 +88,9 @@ const Metafields = (props) => {
   });
 
   return (
-    <div>
-    <h3>
-      <TextStyle variation="strong">Metafields</TextStyle>
-    </h3>
+    <Card title="Reviews">
       {fieldsList}
-    </div>
+    </Card>
   )
 }
 
@@ -110,7 +107,7 @@ const Index = () => {
       <TitleBar
         title="ReReviews"
         primaryAction={{
-          content: 'Add Review...',
+          content: 'Delete All Reviews',
           onAction: () => addPublicMetafield(createMetafieldInput("gid://shopify/Product/6586388578386", "some review that no one created"))
         }}
       />
@@ -120,8 +117,15 @@ const Index = () => {
           items={data['products']['edges']}
           renderItem={(item) => {
             const media = <Thumbnail alt="pic" source={item.node.featuredImage ? item.node.featuredImage.originalSrc : "https://burst.shopifycdn.com/photos/black-leather-choker-necklace_373x@2x.jpg"} />;
+            const shortcuts = [
+              {
+                content: 'Add review...',
+                accessibilityLabel: `Add review`,
+                onAction: () => addPublicMetafield(createMetafieldInput(item.node.id, "some review that no one created"))
+              },
+            ];
             return (
-              <ResourceList.Item id={item.node.id} url={item.node.id} media={media}>
+              <ResourceList.Item id={item.node.id} url={item.node.id} media={media} shortcutActions={shortcuts} persistActions>
                 <h3>
                   <TextStyle variation="strong">{item.node.title}</TextStyle>
                 </h3>
