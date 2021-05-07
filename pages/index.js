@@ -1,4 +1,4 @@
-import { Heading, Page, Card, ResourceList, Avatar, TextStyle, Thumbnail } from "@shopify/polaris";
+import { Button, Heading, Page, Card, ResourceList, Avatar, TextStyle, Thumbnail, IndexTable, Badge } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { Query, useQuery, useMutation } from 'react-apollo';
 import gql from 'graphql-tag';
@@ -78,19 +78,8 @@ const createMetafieldInput = (id, value) => {
 }
 
 const Metafields = (props) => {
-  let fieldsList = props.metafields.edges.map((edge) => {
-    return (
-      <div key={edge.node.key}>
-        {edge.node.namespace + ", " + edge.node.key}
-        <div>{edge.node.value}</div>
-      </div>
-    )
-  });
-
   return (
-    <Card title="Reviews">
-      {fieldsList}
-    </Card>
+        {fieldsList}
   )
 }
 
@@ -100,7 +89,48 @@ const Index = () => {
 
   if(loading) return <div>Loading...</div>;
   if(error) return <div>Error {error.message}</div>;
+
+  const metafieldList = data.products.edges.map((item) => {
+    const media = <Thumbnail alt="pic" source={item.node.featuredImage ? item.node.featuredImage.originalSrc : "https://burst.shopifycdn.com/photos/black-leather-choker-necklace_373x@2x.jpg"} />;
+    return item.node.metafields.edges.map((edge) => {
+      return (
+        <IndexTable.Row
+          id={edge.node.id}
+          key={edge.node.id}
+        >
+          <IndexTable.Cell>
+            {media}
+          </IndexTable.Cell>
+          <IndexTable.Cell>5</IndexTable.Cell>
+          <IndexTable.Cell>Dec 15, 2021</IndexTable.Cell>
+          <IndexTable.Cell>{edge.node.value}</IndexTable.Cell>
+          <IndexTable.Cell><Badge status="success">Published</Badge><Button>Add product</Button></IndexTable.Cell>
+        </IndexTable.Row>
+      )
+    });
+  });
+
   console.log(data);
+
+  const resourceName = {
+    singular: 'review',
+    plural: 'reviews',
+  };
+
+  const promotedBulkActions = [
+    {
+      content: 'Approve',
+      onAction: () => console.log('Todo: implement bulk edit'),
+    },
+    {
+      content: 'Demote',
+      onAction: () => console.log('Todo: implement bulk edit'),
+    },
+    {
+      content: 'Delete',
+      onAction: () => console.log('Todo: implement bulk edit'),
+    },
+  ];
 
   return (
     <Page>
@@ -112,29 +142,22 @@ const Index = () => {
         }}
       />
       <Card>
-        <ResourceList
-          showHeader
-          items={data['products']['edges']}
-          renderItem={(item) => {
-            const media = <Thumbnail alt="pic" source={item.node.featuredImage ? item.node.featuredImage.originalSrc : "https://burst.shopifycdn.com/photos/black-leather-choker-necklace_373x@2x.jpg"} />;
-            const shortcuts = [
-              {
-                content: 'Add review...',
-                accessibilityLabel: `Add review`,
-                onAction: () => addPublicMetafield(createMetafieldInput(item.node.id, "some review that no one created"))
-              },
-            ];
-            return (
-              <ResourceList.Item id={item.node.id} url={item.node.id} media={media} shortcutActions={shortcuts} persistActions>
-                <h3>
-                  <TextStyle variation="strong">{item.node.title}</TextStyle>
-                </h3>
-                <div>{item.node.description}</div>
-                <Metafields metafields={item.node.metafields} />
-              </ResourceList.Item>
-            );
-          }}
-        />
+        <IndexTable
+          resourceName={resourceName}
+          itemCount={10}
+          loading={loading}
+          promotedBulkActions={promotedBulkActions}
+          selectedItemsCount={'All'}
+          headings={[
+            {title: 'Product'},
+            {title: 'Rating'},
+            {title: 'Date'},
+            {title: 'Content'},
+            {title: 'Status'},
+          ]}
+        >
+          {metafieldList}
+        </IndexTable>
       </Card>
     </Page>
   )
