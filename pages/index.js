@@ -1,4 +1,4 @@
-import { Button, Heading, ResourceItem, Page, Card, ResourceList, Avatar, TextStyle, Thumbnail, IndexTable, Badge } from "@shopify/polaris";
+import { Button, Stack, ResourceItem, Page, Card, ResourceList, Avatar, TextStyle, Thumbnail, IndexTable, Badge } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { useState } from "react";
 import { useQuery, useMutation } from 'react-apollo';
@@ -60,6 +60,18 @@ const ADD_METAFIELDS_BY_ID = gql`
   }
 `;
 
+const DELETE_METAFIELD_BY_ID = gql`
+  mutation metafieldDelete($input: MetafieldDeleteInput!) {
+    metafieldDelete(input: $input) {
+      deletedId
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
+
 const createMetafieldInput = (id, value) => {
   const uuidv4 = Math.random().toString(36).substring(7);
   return {
@@ -78,18 +90,26 @@ const createMetafieldInput = (id, value) => {
   };
 }
 
-const truncate = (input) => input.length > 10 ? `${input.substring(0, 5)}...` : input;
-
-const Metafields = (props) => {
-  return (
-        {fieldsList}
-  )
+const createDeleteMetafieldInput = (id) => {
+  return {
+    variables: {
+      input: {
+        id: id
+      }
+    }
+  };
 }
 
 const Index = () => {
   const { loading, error, data, refetch } = useQuery(GET_PRODUCTS_BY_ID);
   const [operationRunning, setOperationRunning] = useState(false);
   const [addPublicMetafield,  { mutationData }] = useMutation(ADD_METAFIELDS_BY_ID, {
+    onCompleted: () => {
+      refetch();
+      setOperationRunning(false);
+    }
+  });
+  const [removePublicMetafield, { deleteMutationData }] = useMutation(DELETE_METAFIELD_BY_ID, {
     onCompleted: () => {
       refetch();
       setOperationRunning(false);
@@ -128,20 +148,34 @@ const Index = () => {
         media={media}
         accessibilityLabel={`View details for ${edge.node.id}`}
         >
-          <h3>
-            <TextStyle variation="strong">5 stars</TextStyle>
+          <Stack>
+          <Stack.Item fill>
+            <h3>
+            <TextStyle variation="strong">3/5</TextStyle>
+            </h3>
+            <div>{edge.node.value}</div>
+          </Stack.Item>
+          <Stack.Item>
             <Badge status="success">Published</Badge>
-          </h3>
-          <div>{edge.node.value}</div>
-          <Button loading={operationRunning} onClick={() => {
-            setOperationRunning(true);
-            addPublicMetafield(
-              createMetafieldInput(
-              item.node.id,
-              JSON.stringify(
-                {name:"nadine", email:"email", review:"this was a great product"}
-              )))}
-            }>Clone review</Button>
+          </Stack.Item>
+          <Stack.Item>
+            <Button onClick={() => {
+              setOperationRunning(true);
+              addPublicMetafield(
+                createMetafieldInput(
+                item.node.id,
+                JSON.stringify(
+                  {name:"nadine", email:"email", review:"this was a great product"}
+                )))}
+              }>Clone review</Button>
+              <Button onClick={() => {
+                setOperationRunning(true);
+                removePublicMetafield(
+                  createDeleteMetafieldInput(edge.node.id));
+                }
+              }>Delete review</Button>
+            </Stack.Item>
+          </Stack>
       </ResourceItem>
       )
     });
