@@ -70,7 +70,7 @@ const createMetafieldInput = (id, value) => {
           namespace: "rereviews",
           key: uuidv4,
           value: value,
-          valueType: "STRING"}
+          valueType: "JSON_STRING"}
         ]
       }
     }
@@ -104,7 +104,17 @@ const Index = () => {
           <IndexTable.Cell>5</IndexTable.Cell>
           <IndexTable.Cell>Dec 15, 2021</IndexTable.Cell>
           <IndexTable.Cell>{edge.node.value}</IndexTable.Cell>
-          <IndexTable.Cell><Badge status="success">Published</Badge><Button>Add product</Button></IndexTable.Cell>
+          <IndexTable.Cell>
+            <Badge status="success">Published</Badge>
+            <Button onClick={() => {
+              addPublicMetafield(
+                createMetafieldInput(
+                item.node.id,
+                JSON.stringify(
+                  {name:"nadine", email:"email", review:"this was a great product"}
+                )))}
+              }>Add review</Button>
+          </IndexTable.Cell>
         </IndexTable.Row>
       )
     });
