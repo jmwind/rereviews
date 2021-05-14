@@ -18,6 +18,7 @@ import { TitleBar } from "@shopify/app-bridge-react";
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "react-apollo";
 import gql from "graphql-tag";
+import Rating from "react-simple-star-rating";
 
 const GET_PRODUCTS_BY_ID = gql`
   {
@@ -117,29 +118,25 @@ const createDeleteMetafieldInput = (id) => {
 };
 
 const ModalWithPrimaryActionExample = ({ open, onClose }) => {
-  const [loading, setLoading] = useState(false);
   const [active, setActive] = useState(open);
   const [rating, setRating] = useState(5);
   const [name, setName] = useState("Alizé Martel");
   const [email, setEmail] = useState("test@shopify.io");
   const [review, setReview] = useState("Write something nice");
 
-  const toggleModal = useCallback(() => {
-    setLoading(true);
-    onClose(rating, name, email, review);
-    setActive((active) => !active);
-  }, []);
-
   return (
     <div style={{ height: "500px" }}>
       <Modal
         open={active}
-        loading={loading}
-        onClose={toggleModal}
+        onClose={() => {
+          setActive(false);
+        }}
         title="Create new review"
         primaryAction={{
           content: "Save",
-          onAction: toggleModal,
+          onAction: () => {
+            onClose(rating, name, email, review);
+          },
         }}
       >
         <Modal.Section>
@@ -222,28 +219,13 @@ const Index = () => {
     );
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error {error.message}</div>;
-
   const resourceName = {
     singular: "review",
     plural: "reviews",
   };
 
-  const promotedBulkActions = [
-    {
-      content: "Approve",
-      onAction: () => console.log("Todo: implement bulk edit"),
-    },
-    {
-      content: "Demote",
-      onAction: () => console.log("Todo: implement bulk edit"),
-    },
-    {
-      content: "Delete",
-      onAction: () => console.log("Todo: implement bulk edit"),
-    },
-  ];
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error {error.message}</div>;
 
   const renderItem = (item) => {
     const media = (
@@ -285,6 +267,9 @@ const Index = () => {
           },
         },
       ];
+
+      const review = JSON.parse(edge.node.value);
+
       return (
         <ResourceItem
           id={edge.node.id}
@@ -295,9 +280,17 @@ const Index = () => {
           <Stack>
             <Stack.Item fill>
               <h3>
-                <TextStyle variation="strong">3/5</TextStyle>
+                <Rating
+                  ratingValue={review.rating}
+                  size={15}
+                  fillColor="orange"
+                  emptyColor="gray"
+                />
               </h3>
-              <div>{edge.node.value}</div>
+              <div>{review.review}</div>
+              <div>
+                {review.name} ({review.email})
+              </div>
             </Stack.Item>
             <Stack.Item>
               <Badge status="success">Published</Badge>
