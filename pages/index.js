@@ -1,12 +1,27 @@
-import { Button, Stack, ResourceItem, Page, Card, ResourceList, Avatar, TextStyle, Thumbnail, IndexTable, Badge } from "@shopify/polaris";
+import {
+  TextContainer,
+  TextField,
+  Button,
+  Stack,
+  Modal,
+  ResourceItem,
+  Page,
+  Card,
+  ResourceList,
+  Avatar,
+  TextStyle,
+  Thumbnail,
+  IndexTable,
+  Badge,
+} from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { useState } from "react";
-import { useQuery, useMutation } from 'react-apollo';
-import gql from 'graphql-tag';
+import { useState, useRef, useCallback } from "react";
+import { useQuery, useMutation } from "react-apollo";
+import gql from "graphql-tag";
 
 const GET_PRODUCTS_BY_ID = gql`
   {
-    products(first:10) {
+    products(first: 10) {
       edges {
         node {
           id
@@ -26,7 +41,7 @@ const GET_PRODUCTS_BY_ID = gql`
               }
             }
           }
-          variants(first:1) {
+          variants(first: 1) {
             edges {
               node {
                 image {
@@ -77,117 +92,209 @@ const createMetafieldInput = (id, value) => {
   return {
     variables: {
       input: {
-      id: id,
-      metafields:
-        [{
-          namespace: "rereviews",
-          key: uuidv4,
-          value: value,
-          valueType: "JSON_STRING"}
-        ]
-      }
-    }
+        id: id,
+        metafields: [
+          {
+            namespace: "rereviews",
+            key: uuidv4,
+            value: value,
+            valueType: "JSON_STRING",
+          },
+        ],
+      },
+    },
   };
-}
+};
 
 const createDeleteMetafieldInput = (id) => {
   return {
     variables: {
       input: {
-        id: id
-      }
-    }
+        id: id,
+      },
+    },
   };
-}
+};
+
+const ModalWithPrimaryActionExample = ({ open }) => {
+  const DISCOUNT_LINK = "https://polaris.shopify.com/";
+  const [active, setActive] = useState(open);
+  const node = useRef(null);
+
+  const handleClick = useCallback(() => {
+    node.current && node.current.input.focus();
+  }, []);
+
+  const handleFocus = useCallback(() => {
+    if (node.current == null) {
+      return;
+    }
+    node.current.input.select();
+    document.execCommand("copy");
+  }, []);
+
+  const toggleModal = useCallback(() => setActive((active) => !active), []);
+
+  return (
+    <div style={{ height: "500px" }}>
+      <Modal
+        open={active}
+        onClose={toggleModal}
+        title="Get a shareable link"
+        primaryAction={{
+          content: "Close",
+          onAction: toggleModal,
+        }}
+      >
+        <Modal.Section>
+          <Stack vertical>
+            <Stack.Item>
+              <TextContainer>
+                <p>
+                  You can share this discount link with your customers via email
+                  or social media. Your discount will be automatically applied
+                  at checkout.
+                </p>
+              </TextContainer>
+            </Stack.Item>
+            <Stack.Item fill>
+              <TextField
+                ref={node}
+                label="Discount link"
+                onFocus={handleFocus}
+                value={DISCOUNT_LINK}
+                onChange={() => {}}
+                connectedRight={
+                  <Button primary onClick={handleClick}>
+                    Copy link
+                  </Button>
+                }
+              />
+            </Stack.Item>
+          </Stack>
+        </Modal.Section>
+      </Modal>
+    </div>
+  );
+};
 
 const Index = () => {
   const { loading, error, data, refetch } = useQuery(GET_PRODUCTS_BY_ID);
   const [operationRunning, setOperationRunning] = useState(false);
-  const [addPublicMetafield,  { mutationData }] = useMutation(ADD_METAFIELDS_BY_ID, {
-    onCompleted: () => {
-      refetch();
-      setOperationRunning(false);
+  const [addMetafieldDialogOpen, setAddMetafieldDialogOpen] = useState(false);
+  const [addPublicMetafield, { mutationData }] = useMutation(
+    ADD_METAFIELDS_BY_ID,
+    {
+      onCompleted: () => {
+        refetch();
+        setOperationRunning(false);
+      },
     }
-  });
-  const [removePublicMetafield, { deleteMutationData }] = useMutation(DELETE_METAFIELD_BY_ID, {
-    onCompleted: () => {
-      refetch();
-      setOperationRunning(false);
+  );
+  const [removePublicMetafield, { deleteMutationData }] = useMutation(
+    DELETE_METAFIELD_BY_ID,
+    {
+      onCompleted: () => {
+        refetch();
+        setOperationRunning(false);
+      },
     }
-  });
+  );
 
-  if(loading) return <div>Loading...</div>;
-  if(error) return <div>Error {error.message}</div>;
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error {error.message}</div>;
 
   const resourceName = {
-    singular: 'review',
-    plural: 'reviews',
+    singular: "review",
+    plural: "reviews",
   };
 
   const promotedBulkActions = [
     {
-      content: 'Approve',
-      onAction: () => console.log('Todo: implement bulk edit'),
+      content: "Approve",
+      onAction: () => console.log("Todo: implement bulk edit"),
     },
     {
-      content: 'Demote',
-      onAction: () => console.log('Todo: implement bulk edit'),
+      content: "Demote",
+      onAction: () => console.log("Todo: implement bulk edit"),
     },
     {
-      content: 'Delete',
-      onAction: () => console.log('Todo: implement bulk edit'),
+      content: "Delete",
+      onAction: () => console.log("Todo: implement bulk edit"),
     },
   ];
 
-  const renderItem =(item) => {
-    const media = <Thumbnail alt="pic" source={item.node.featuredImage ? item.node.featuredImage.originalSrc : "https://burst.shopifycdn.com/photos/black-leather-choker-necklace_373x@2x.jpg"} />;
+  const renderItem = (item) => {
+    const media = (
+      <Thumbnail
+        alt="pic"
+        source={
+          item.node.featuredImage
+            ? item.node.featuredImage.originalSrc
+            : "https://burst.shopifycdn.com/photos/black-leather-choker-necklace_373x@2x.jpg"
+        }
+      />
+    );
     return item.node.metafields.edges.map((edge) => {
+      const shortcutActions = [
+        {
+          content: "Clone review",
+          accessibilityLabel: `Clone review`,
+          onAction: () => {
+            setOperationRunning(true);
+            addPublicMetafield(
+              createMetafieldInput(
+                item.node.id,
+                JSON.stringify({
+                  name: "nadine",
+                  email: "email",
+                  review: "this was a great product",
+                })
+              )
+            );
+          },
+        },
+        {
+          content: "Delete review",
+          accessibilityLabel: `Delete review`,
+          onAction: () => {
+            setOperationRunning(true);
+            removePublicMetafield(createDeleteMetafieldInput(edge.node.id));
+          },
+        },
+      ];
       return (
         <ResourceItem
-        id={edge.node.id}
-        media={media}
-        accessibilityLabel={`View details for ${edge.node.id}`}
+          id={edge.node.id}
+          media={media}
+          shortcutActions={shortcutActions}
+          accessibilityLabel={`View details for ${edge.node.id}`}
         >
           <Stack>
-          <Stack.Item fill>
-            <h3>
-            <TextStyle variation="strong">3/5</TextStyle>
-            </h3>
-            <div>{edge.node.value}</div>
-          </Stack.Item>
-          <Stack.Item>
-            <Badge status="success">Published</Badge>
-          </Stack.Item>
-          <Stack.Item>
-            <Button onClick={() => {
-              setOperationRunning(true);
-              addPublicMetafield(
-                createMetafieldInput(
-                item.node.id,
-                JSON.stringify(
-                  {name:"nadine", email:"email", review:"this was a great product"}
-                )))}
-              }>Clone review</Button>
-              <Button onClick={() => {
-                setOperationRunning(true);
-                removePublicMetafield(
-                  createDeleteMetafieldInput(edge.node.id));
-                }
-              }>Delete review</Button>
+            <Stack.Item fill>
+              <h3>
+                <TextStyle variation="strong">3/5</TextStyle>
+              </h3>
+              <div>{edge.node.value}</div>
+            </Stack.Item>
+            <Stack.Item>
+              <Badge status="success">Published</Badge>
             </Stack.Item>
           </Stack>
-      </ResourceItem>
-      )
+        </ResourceItem>
+      );
     });
-  }
+  };
 
   return (
     <Page>
       <TitleBar
         title="ReReviews"
         primaryAction={{
-          content: 'Delete All Reviews',
-          onAction: () => addPublicMetafield(createMetafieldInput("gid://shopify/Product/6586388578386", "some review that no one created"))
+          content: "Add review",
+          onAction: () => {
+            setAddMetafieldDialogOpen(true);
+          },
         }}
       />
       <Card>
@@ -198,8 +305,9 @@ const Index = () => {
           loading={operationRunning}
         />
       </Card>
+      <ModalWithPrimaryActionExample key={addMetafieldDialogOpen} open={addMetafieldDialogOpen} />
     </Page>
-  )
-}
+  );
+};
 
 export default Index;
