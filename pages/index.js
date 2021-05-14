@@ -116,59 +116,54 @@ const createDeleteMetafieldInput = (id) => {
   };
 };
 
-const ModalWithPrimaryActionExample = ({ open }) => {
+const ModalWithPrimaryActionExample = ({ open, onClose }) => {
   const DISCOUNT_LINK = "https://polaris.shopify.com/";
   const [active, setActive] = useState(open);
-  const node = useRef(null);
+  const [rating, setRating] = useState(5);
+  const [name, setName] = useState("Alizé Martel");
+  const [email, setEmail] = useState("test@shopify.io");
+  const [review, setReview] = useState("Write something nice");
 
-  const handleClick = useCallback(() => {
-    node.current && node.current.input.focus();
+  const toggleModal = useCallback(() => {
+    setActive((active) => !active)
+    onClose();
   }, []);
-
-  const handleFocus = useCallback(() => {
-    if (node.current == null) {
-      return;
-    }
-    node.current.input.select();
-    document.execCommand("copy");
-  }, []);
-
-  const toggleModal = useCallback(() => setActive((active) => !active), []);
 
   return (
     <div style={{ height: "500px" }}>
       <Modal
         open={active}
         onClose={toggleModal}
-        title="Get a shareable link"
+        title="Create new review"
         primaryAction={{
-          content: "Close",
+          content: "Save",
           onAction: toggleModal,
         }}
       >
         <Modal.Section>
           <Stack vertical>
-            <Stack.Item>
-              <TextContainer>
-                <p>
-                  You can share this discount link with your customers via email
-                  or social media. Your discount will be automatically applied
-                  at checkout.
-                </p>
-              </TextContainer>
-            </Stack.Item>
             <Stack.Item fill>
               <TextField
-                ref={node}
-                label="Discount link"
-                onFocus={handleFocus}
-                value={DISCOUNT_LINK}
-                onChange={() => {}}
-                connectedRight={
-                  <Button primary onClick={handleClick}>
-                    Copy link
-                  </Button>
-                }
+                label="Rating"
+                value={rating}
+                onChange={(newValue) => {setRating(newValue)}}
+              />
+              <TextField
+                label="Username"
+                value={name}
+                onChange={(newValue) => {setName(newValue)}}
+              />
+              <TextField
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(newValue) => {setEmail(newValue)}}
+              />
+              <TextField
+                label="Review"
+                value={review}
+                multiline={3}
+                onChange={(newValue) => {setReview(newValue)}}
               />
             </Stack.Item>
           </Stack>
@@ -200,6 +195,10 @@ const Index = () => {
       },
     }
   );
+
+  const closeModel = useCallback(() => {
+    setAddMetafieldDialogOpen(false);
+  }, []);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error {error.message}</div>;
@@ -305,7 +304,7 @@ const Index = () => {
           loading={operationRunning}
         />
       </Card>
-      <ModalWithPrimaryActionExample key={addMetafieldDialogOpen} open={addMetafieldDialogOpen} />
+      <ModalWithPrimaryActionExample key={addMetafieldDialogOpen} open={addMetafieldDialogOpen} onClose={() => closeModel()}/>
     </Page>
   );
 };
