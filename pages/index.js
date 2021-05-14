@@ -117,7 +117,7 @@ const createDeleteMetafieldInput = (id) => {
 };
 
 const ModalWithPrimaryActionExample = ({ open, onClose }) => {
-  const DISCOUNT_LINK = "https://polaris.shopify.com/";
+  const [loading, setLoading] = useState(false);
   const [active, setActive] = useState(open);
   const [rating, setRating] = useState(5);
   const [name, setName] = useState("Alizé Martel");
@@ -125,14 +125,16 @@ const ModalWithPrimaryActionExample = ({ open, onClose }) => {
   const [review, setReview] = useState("Write something nice");
 
   const toggleModal = useCallback(() => {
-    setActive((active) => !active)
-    onClose();
+    setLoading(true);
+    onClose(rating, name, email, review);
+    setActive((active) => !active);
   }, []);
 
   return (
     <div style={{ height: "500px" }}>
       <Modal
         open={active}
+        loading={loading}
         onClose={toggleModal}
         title="Create new review"
         primaryAction={{
@@ -146,24 +148,32 @@ const ModalWithPrimaryActionExample = ({ open, onClose }) => {
               <TextField
                 label="Rating"
                 value={rating}
-                onChange={(newValue) => {setRating(newValue)}}
+                onChange={(newValue) => {
+                  setRating(newValue);
+                }}
               />
               <TextField
                 label="Username"
                 value={name}
-                onChange={(newValue) => {setName(newValue)}}
+                onChange={(newValue) => {
+                  setName(newValue);
+                }}
               />
               <TextField
                 label="Email"
                 type="email"
                 value={email}
-                onChange={(newValue) => {setEmail(newValue)}}
+                onChange={(newValue) => {
+                  setEmail(newValue);
+                }}
               />
               <TextField
                 label="Review"
                 value={review}
                 multiline={3}
-                onChange={(newValue) => {setReview(newValue)}}
+                onChange={(newValue) => {
+                  setReview(newValue);
+                }}
               />
             </Stack.Item>
           </Stack>
@@ -196,8 +206,18 @@ const Index = () => {
     }
   );
 
-  const closeModel = useCallback(() => {
+  const closeModel = useCallback((rating, name, email, review) => {
     setAddMetafieldDialogOpen(false);
+    setOperationRunning(true);
+    addPublicMetafield(
+      createMetafieldInput("gid://shopify/Product/6586388578386",
+      JSON.stringify({
+        rating: rating,
+        name: name,
+        email: email,
+        review: review,
+      })
+    ));
   }, []);
 
   if (loading) return <div>Loading...</div>;
@@ -245,6 +265,7 @@ const Index = () => {
               createMetafieldInput(
                 item.node.id,
                 JSON.stringify({
+                  rating: 5,
                   name: "nadine",
                   email: "email",
                   review: "this was a great product",
@@ -304,7 +325,11 @@ const Index = () => {
           loading={operationRunning}
         />
       </Card>
-      <ModalWithPrimaryActionExample key={addMetafieldDialogOpen} open={addMetafieldDialogOpen} onClose={() => closeModel()}/>
+      <ModalWithPrimaryActionExample
+        key={addMetafieldDialogOpen}
+        open={addMetafieldDialogOpen}
+        onClose={(rating, name, email, review) => closeModel(rating, name, email, review)}
+      />
     </Page>
   );
 };
