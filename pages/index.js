@@ -14,7 +14,11 @@ import {
   IndexTable,
   Badge,
 } from "@shopify/polaris";
-import { TitleBar } from "@shopify/app-bridge-react";
+import {
+  TitleBar,
+  useAppBridge,
+  ResourcePicker,
+} from "@shopify/app-bridge-react";
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "react-apollo";
 import gql from "graphql-tag";
@@ -119,6 +123,8 @@ const createDeleteMetafieldInput = (id) => {
 
 const ModalWithPrimaryActionExample = ({ open, onClose }) => {
   const [active, setActive] = useState(open);
+  const [productPicker, setProductPicker] = useState(false);
+  const [productId, setProductId] = useState("");
   const [rating, setRating] = useState(5);
   const [name, setName] = useState("Alizé Martel");
   const [email, setEmail] = useState("test@shopify.io");
@@ -135,12 +141,33 @@ const ModalWithPrimaryActionExample = ({ open, onClose }) => {
         primaryAction={{
           content: "Save",
           onAction: () => {
-            onClose(rating, name, email, review);
+            onClose(rating, name, email, review, productId);
           },
         }}
       >
         <Modal.Section>
           <Stack vertical>
+            <Stack.Item fill>
+              <TextField
+                label="Product"
+                type="string"
+                value={productId}
+                connectedRight={
+                  <Button onClick={() => setProductPicker(true)}>
+                    Select...
+                  </Button>
+                }
+              />
+              <ResourcePicker
+                resourceType="Product"
+                open={productPicker}
+                selectMultiple={false}
+                onSelection={(selectPayload) => {
+                  setProductId(selectPayload.selection[0].id);
+                  setProductPicker(false);
+                }}
+              />
+            </Stack.Item>
             <Stack.Item fill>
               <TextField
                 label="Rating"
@@ -203,12 +230,12 @@ const Index = () => {
     }
   );
 
-  const closeModel = useCallback((rating, name, email, review) => {
+  const closeModel = useCallback((rating, name, email, review, productId) => {
     setAddMetafieldDialogOpen(false);
     setOperationRunning(true);
     addPublicMetafield(
       createMetafieldInput(
-        "gid://shopify/Product/6586388578386",
+        productId,
         JSON.stringify({
           rating: rating,
           name: name,
@@ -323,8 +350,8 @@ const Index = () => {
       <ModalWithPrimaryActionExample
         key={addMetafieldDialogOpen}
         open={addMetafieldDialogOpen}
-        onClose={(rating, name, email, review) =>
-          closeModel(rating, name, email, review)
+        onClose={(rating, name, email, review, productId) =>
+          closeModel(rating, name, email, review, productId)
         }
       />
     </Page>
