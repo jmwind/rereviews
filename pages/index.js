@@ -121,7 +121,7 @@ const createDeleteMetafieldInput = (id) => {
   };
 };
 
-const ModalWithPrimaryActionExample = ({ open, onClose }) => {
+const ModalWithPrimaryActionExample = ({ open, onClose, onCancel }) => {
   const [active, setActive] = useState(open);
   const [productPicker, setProductPicker] = useState(false);
   const [productId, setProductId] = useState("");
@@ -136,6 +136,7 @@ const ModalWithPrimaryActionExample = ({ open, onClose }) => {
         open={active}
         onClose={() => {
           setActive(false);
+          onCancel();
         }}
         title="Create new review"
         primaryAction={{
@@ -350,6 +351,7 @@ const Index = () => {
       <ModalWithPrimaryActionExample
         key={addMetafieldDialogOpen}
         open={addMetafieldDialogOpen}
+        onCancel={() => setAddMetafieldDialogOpen(false)}
         onClose={(rating, name, email, review, productId) =>
           closeModel(rating, name, email, review, productId)
         }
