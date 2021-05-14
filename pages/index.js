@@ -210,14 +210,16 @@ const Index = () => {
     setAddMetafieldDialogOpen(false);
     setOperationRunning(true);
     addPublicMetafield(
-      createMetafieldInput("gid://shopify/Product/6586388578386",
-      JSON.stringify({
-        rating: rating,
-        name: name,
-        email: email,
-        review: review,
-      })
-    ));
+      createMetafieldInput(
+        "gid://shopify/Product/6586388578386",
+        JSON.stringify({
+          rating: rating,
+          name: name,
+          email: email,
+          review: review,
+        })
+      )
+    );
   }, []);
 
   if (loading) return <div>Loading...</div>;
@@ -328,7 +330,9 @@ const Index = () => {
       <ModalWithPrimaryActionExample
         key={addMetafieldDialogOpen}
         open={addMetafieldDialogOpen}
-        onClose={(rating, name, email, review) => closeModel(rating, name, email, review)}
+        onClose={(rating, name, email, review) =>
+          closeModel(rating, name, email, review)
+        }
       />
     </Page>
   );
