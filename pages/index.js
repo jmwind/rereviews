@@ -8,10 +8,13 @@ import {
   Page,
   Card,
   ResourceList,
+  Loading,
   Avatar,
   TextStyle,
   Thumbnail,
+  Frame,
   IndexTable,
+  EmptyState,
   Badge,
 } from "@shopify/polaris";
 import {
@@ -173,6 +176,7 @@ const ModalWithPrimaryActionExample = ({ open, onClose, onCancel }) => {
               <TextField
                 label="Rating"
                 value={rating}
+                pattern="[0-5]"
                 onChange={(newValue) => {
                   setRating(newValue);
                 }}
@@ -252,7 +256,14 @@ const Index = () => {
     plural: "reviews",
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading)
+    return (
+      <div>
+        <Frame>
+          <Loading />
+        </Frame>
+      </div>
+    );
   if (error) return <div>Error {error.message}</div>;
 
   const renderItem = (item) => {
@@ -328,6 +339,8 @@ const Index = () => {
       );
     });
   };
+
+  console.log(data);
 
   return (
     <Page>
