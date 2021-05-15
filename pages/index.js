@@ -128,26 +128,36 @@ const ModalWithPrimaryActionExample = ({ open, onClose, onCancel }) => {
   const [active, setActive] = useState(open);
   const [productPicker, setProductPicker] = useState(false);
   const [productId, setProductId] = useState("");
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState("5");
   const [name, setName] = useState("Alizé Martel");
   const [email, setEmail] = useState("test@shopify.io");
-  const [review, setReview] = useState("Write something nice");
+  const [review, setReview] = useState(
+    "I don't know if it was the pressure of early adult life or the demands of college, but I began to experiment with huge ships in my late teens. I began by looking at huge ship magazines in the basement when my parents weren't around. Then one day, my mom came home early and unexpectedly caught me in the act. Both of my parents were furious. They asked me where I go the magazine from and I said I found it and that I thought it only contained articles on small watercraft."
+  );
+
+  const closeModal = () => {
+    setActive(false);
+    onCancel();
+  };
 
   return (
     <div style={{ height: "500px" }}>
       <Modal
         open={active}
-        onClose={() => {
-          setActive(false);
-          onCancel();
-        }}
-        title="Create new review"
+        onClose={() => closeModal()}
+        title="New review"
         primaryAction={{
-          content: "Save",
+          content: "Create",
           onAction: () => {
             onClose(rating, name, email, review, productId);
           },
         }}
+        secondaryActions={[
+          {
+            content: "Cancel",
+            onAction: () => closeModal(),
+          },
+        ]}
       >
         <Modal.Section>
           <Stack vertical>
@@ -156,10 +166,9 @@ const ModalWithPrimaryActionExample = ({ open, onClose, onCancel }) => {
                 label="Product"
                 type="string"
                 value={productId}
+                disabled={true}
                 connectedRight={
-                  <Button onClick={() => setProductPicker(true)}>
-                    Select...
-                  </Button>
+                  <Button onClick={() => setProductPicker(true)}>Browse</Button>
                 }
               />
               <ResourcePicker
@@ -175,8 +184,10 @@ const ModalWithPrimaryActionExample = ({ open, onClose, onCancel }) => {
             <Stack.Item fill>
               <TextField
                 label="Rating"
+                type="number"
+                max={5}
+                min={0}
                 value={rating}
-                pattern="[0-5]"
                 onChange={(newValue) => {
                   setRating(newValue);
                 }}
@@ -316,7 +327,7 @@ const Index = () => {
           shortcutActions={shortcutActions}
           accessibilityLabel={`View details for ${edge.node.id}`}
         >
-          <Stack>
+          <Stack wrap={false}>
             <Stack.Item fill>
               <h3>
                 <Rating
@@ -326,10 +337,12 @@ const Index = () => {
                   emptyColor="gray"
                 />
               </h3>
-              <div>{review.review}</div>
               <div>
-                {review.name} ({review.email})
+                <TextStyle variation="strong">{review.review}</TextStyle>
               </div>
+              <TextStyle variation="subdued">
+                {review.name} ({review.email})
+              </TextStyle>
             </Stack.Item>
             <Stack.Item>
               <Badge status="success">Published</Badge>
