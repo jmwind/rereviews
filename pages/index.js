@@ -33,15 +33,12 @@ const Index = () => {
       setOperationRunning(false);
     },
   });
-  const [removePublicMetafield, { deleteMutationData }] = useMutation(
-    DELETE_METAFIELD_BY_ID,
-    {
-      onCompleted: () => {
-        refetch();
-        setOperationRunning(false);
-      },
-    }
-  );
+  const [removePublicMetafield] = useMutation(DELETE_METAFIELD_BY_ID, {
+    onCompleted: () => {
+      refetch();
+      setOperationRunning(false);
+    },
+  });
 
   const closeModel = useCallback((rating, name, email, review, productId) => {
     setAddMetafieldDialogOpen(false);
@@ -112,6 +109,7 @@ const Index = () => {
                 <Rating
                   ratingValue={review.rating}
                   size={15}
+                  transtition={false}
                   fillColor="orange"
                   emptyColor="gray"
                 />
