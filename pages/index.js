@@ -22,111 +22,21 @@ import {
   useAppBridge,
   ResourcePicker,
 } from "@shopify/app-bridge-react";
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "react-apollo";
-import gql from "graphql-tag";
 import Rating from "react-simple-star-rating";
+import {
+  GET_PRODUCTS,
+  ADD_METAFIELDS_BY_ID,
+  DELETE_METAFIELD_BY_ID,
+  createMetafieldInput,
+  createDeleteMetafieldInput,
+} from "./graphql";
 
-const GET_PRODUCTS_BY_ID = gql`
-  {
-    products(first: 10) {
-      edges {
-        node {
-          id
-          title
-          description
-          featuredImage {
-            id
-            originalSrc
-          }
-          metafields(namespace: "rereviews", first: 10) {
-            edges {
-              node {
-                id
-                namespace
-                key
-                value
-              }
-            }
-          }
-          variants(first: 1) {
-            edges {
-              node {
-                image {
-                  src
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-const ADD_METAFIELDS_BY_ID = gql`
-  mutation($input: ProductInput!) {
-    productUpdate(input: $input) {
-      product {
-        metafields(first: 10) {
-          edges {
-            node {
-              id
-              namespace
-              key
-              value
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-const DELETE_METAFIELD_BY_ID = gql`
-  mutation metafieldDelete($input: MetafieldDeleteInput!) {
-    metafieldDelete(input: $input) {
-      deletedId
-      userErrors {
-        field
-        message
-      }
-    }
-  }
-`;
-
-const createMetafieldInput = (id, value) => {
-  const uuidv4 = Math.random().toString(36).substring(7);
-  return {
-    variables: {
-      input: {
-        id: id,
-        metafields: [
-          {
-            namespace: "rereviews",
-            key: uuidv4,
-            value: value,
-            valueType: "JSON_STRING",
-          },
-        ],
-      },
-    },
-  };
-};
-
-const createDeleteMetafieldInput = (id) => {
-  return {
-    variables: {
-      input: {
-        id: id,
-      },
-    },
-  };
-};
-
-const ModalWithPrimaryActionExample = ({ open, onClose, onCancel }) => {
+const CreateReviewDialog = ({ open, onClose, onCancel }) => {
   const [active, setActive] = useState(open);
   const [productPicker, setProductPicker] = useState(false);
+  const [productName, setProductName] = useState("");
   const [productId, setProductId] = useState("");
   const [rating, setRating] = useState("5");
   const [name, setName] = useState("Alizé Martel");
@@ -165,7 +75,8 @@ const ModalWithPrimaryActionExample = ({ open, onClose, onCancel }) => {
               <TextField
                 label="Product"
                 type="string"
-                value={productId}
+                placeholder="Select a product..."
+                value={productName}
                 disabled={true}
                 connectedRight={
                   <Button onClick={() => setProductPicker(true)}>Browse</Button>
@@ -176,7 +87,9 @@ const ModalWithPrimaryActionExample = ({ open, onClose, onCancel }) => {
                 open={productPicker}
                 selectMultiple={false}
                 onSelection={(selectPayload) => {
-                  setProductId(selectPayload.selection[0].id);
+                  const product = selectPayload.selection[0];
+                  setProductId(product.id);
+                  setProductName(product.title);
                   setProductPicker(false);
                 }}
               />
@@ -224,7 +137,7 @@ const ModalWithPrimaryActionExample = ({ open, onClose, onCancel }) => {
 };
 
 const Index = () => {
-  const { loading, error, data, refetch } = useQuery(GET_PRODUCTS_BY_ID);
+  const { loading, error, data, refetch } = useQuery(GET_PRODUCTS);
   const [operationRunning, setOperationRunning] = useState(false);
   const [addMetafieldDialogOpen, setAddMetafieldDialogOpen] = useState(false);
   const [addPublicMetafield, { mutationData }] = useMutation(
@@ -291,24 +204,6 @@ const Index = () => {
     return item.node.metafields.edges.map((edge) => {
       const shortcutActions = [
         {
-          content: "Clone review",
-          accessibilityLabel: `Clone review`,
-          onAction: () => {
-            setOperationRunning(true);
-            addPublicMetafield(
-              createMetafieldInput(
-                item.node.id,
-                JSON.stringify({
-                  rating: 5,
-                  name: "nadine",
-                  email: "email",
-                  review: "this was a great product",
-                })
-              )
-            );
-          },
-        },
-        {
           content: "Delete review",
           accessibilityLabel: `Delete review`,
           onAction: () => {
@@ -353,8 +248,6 @@ const Index = () => {
     });
   };
 
-  console.log(data);
-
   return (
     <Page>
       <TitleBar
@@ -374,7 +267,7 @@ const Index = () => {
           loading={operationRunning}
         />
       </Card>
-      <ModalWithPrimaryActionExample
+      <CreateReviewDialog
         key={addMetafieldDialogOpen}
         open={addMetafieldDialogOpen}
         onCancel={() => setAddMetafieldDialogOpen(false)}
