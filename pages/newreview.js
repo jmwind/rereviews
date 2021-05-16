@@ -1,4 +1,4 @@
-import { TextField, Button, Stack, Modal } from "@shopify/polaris";
+import { TextField, Button, Stack, Modal, Select } from "@shopify/polaris";
 import { ResourcePicker } from "@shopify/app-bridge-react";
 import { useState } from "react";
 
@@ -7,11 +7,12 @@ const CreateReviewDialog = ({ open, onClose, onCancel }) => {
   const [productPicker, setProductPicker] = useState(false);
   const [productName, setProductName] = useState("");
   const [productId, setProductId] = useState("");
+  const [published, setPublished] = useState("published");
   const [rating, setRating] = useState("5");
   const [name, setName] = useState("Alizé Martel");
   const [email, setEmail] = useState("test@shopify.io");
   const [review, setReview] = useState(
-    "I don't know if it was the pressure of early adult life or the demands of college, but I began to experiment with huge ships in my late teens. I began by looking at huge ship magazines in the basement when my parents weren't around. Then one day, my mom came home early and unexpectedly caught me in the act. Both of my parents were furious. They asked me where I go the magazine from and I said I found it and that I thought it only contained articles on small watercraft."
+    "I don't know if it was the pressure of early adult life or the demands of college, but I began to experiment with huge ships in my late teens. I began by looking at huge ship magazines in the basement when my parents weren't around."
   );
 
   const closeModal = () => {
@@ -28,7 +29,14 @@ const CreateReviewDialog = ({ open, onClose, onCancel }) => {
         primaryAction={{
           content: "Create",
           onAction: () => {
-            onClose(rating, name, email, review, productId);
+            onClose({
+              rating: rating,
+              name: name,
+              email: email,
+              review: review,
+              productId: productId,
+              visibility: published,
+            });
           },
         }}
         secondaryActions={[
@@ -64,6 +72,17 @@ const CreateReviewDialog = ({ open, onClose, onCancel }) => {
               />
             </Stack.Item>
             <Stack.Item fill>
+              <Select
+                label="Visibility"
+                options={[
+                  { label: "Published", value: "published" },
+                  { label: "Hidden", value: "hidden" },
+                ]}
+                onChange={(newValue) => {
+                  setPublished(newValue);
+                }}
+                value={published}
+              />
               <TextField
                 label="Rating"
                 type="number"

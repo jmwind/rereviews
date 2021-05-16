@@ -10,6 +10,7 @@ import {
   Frame,
   Badge,
 } from "@shopify/polaris";
+import { DeleteMajor, RefreshMajor } from "@shopify/polaris-icons";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "react-apollo";
@@ -18,8 +19,12 @@ import {
   GET_PRODUCTS,
   ADD_METAFIELDS_BY_ID,
   DELETE_METAFIELD_BY_ID,
+  ADD_PRIVATE_METAFIELDS_BY_ID,
+  DELETE_PRIVATE_METAFIELD_BY_ID,
   createMetafieldInput,
   createDeleteMetafieldInput,
+  createPrivateMetafieldInput,
+  createDeletePrivateMetafieldInput,
 } from "./graphql";
 import { CreateReviewDialog } from "./newreview";
 
@@ -33,27 +38,45 @@ const Index = () => {
       setOperationRunning(false);
     },
   });
+  const [addPrivatePublicMetafield] = useMutation(
+    ADD_PRIVATE_METAFIELDS_BY_ID,
+    {
+      onCompleted: () => {
+        refetch();
+        setOperationRunning(false);
+      },
+    }
+  );
   const [removePublicMetafield] = useMutation(DELETE_METAFIELD_BY_ID, {
     onCompleted: () => {
       refetch();
       setOperationRunning(false);
     },
   });
+  const [removePrivateMetafield] = useMutation(DELETE_PRIVATE_METAFIELD_BY_ID, {
+    onCompleted: () => {
+      refetch();
+      setOperationRunning(false);
+    },
+  });
 
-  const closeModel = useCallback((rating, name, email, review, productId) => {
+  const closeModel = useCallback((data) => {
     setAddMetafieldDialogOpen(false);
     setOperationRunning(true);
-    addPublicMetafield(
-      createMetafieldInput(
-        productId,
-        JSON.stringify({
-          rating: rating,
-          name: name,
-          email: email,
-          review: review,
-        })
-      )
-    );
+    const value = JSON.stringify({
+      rating: data.rating,
+      name: data.name,
+      email: data.email,
+      review: data.review,
+      visibility: data.visibility,
+    });
+    if (data.visibility === "published") {
+      addPublicMetafield(createMetafieldInput(data.productId, value));
+    } else {
+      addPrivatePublicMetafield(
+        createPrivateMetafieldInput(data.productId, value)
+      );
+    }
   }, []);
 
   const resourceName = {
@@ -71,6 +94,8 @@ const Index = () => {
     );
   if (error) return <div>Error {error.message}</div>;
 
+  console.log(data);
+
   const renderItem = (item) => {
     const media = (
       <Thumbnail
@@ -82,19 +107,68 @@ const Index = () => {
         }
       />
     );
-    return item.node.metafields.edges.map((edge) => {
+
+    const reviews = [
+      ...item.node.metafields.edges,
+      ...item.node.privateMetafields.edges,
+    ];
+
+    return reviews.map((edge) => {
+      const review = JSON.parse(edge.node.value);
+      const publishedStatus =
+        review.visibility === "published" ? "success" : "warning";
+
       const shortcutActions = [
         {
-          content: "Delete review",
+          icon: DeleteMajor,
           accessibilityLabel: `Delete review`,
           onAction: () => {
             setOperationRunning(true);
-            removePublicMetafield(createDeleteMetafieldInput(edge.node.id));
+            if (edge.node.__typename == "PrivateMetafield") {
+              removePrivateMetafield(
+                // TODO: the difference in APIs between private and public metafields
+                // is gross! We should pass in the id of the metafield. Docs are wrong
+                // you can't delete without the owning product id in the mutation.
+                createDeletePrivateMetafieldInput(
+                  item.node.id,
+                  edge.node.namespace,
+                  edge.node.key
+                )
+              );
+            } else {
+              removePublicMetafield(createDeleteMetafieldInput(edge.node.id));
+            }
+          },
+        },
+        {
+          icon: RefreshMajor,
+          accessibilityLabel: "Toggle visibility",
+          onAction: () => {
+            if (edge.node.__typename == "PrivateMetafield") {
+              review.visibility = "published";
+              addPublicMetafield(
+                createMetafieldInput(item.node.id, JSON.stringify(review))
+              );
+              removePrivateMetafield(
+                createDeletePrivateMetafieldInput(
+                  item.node.id,
+                  edge.node.namespace,
+                  edge.node.key
+                )
+              );
+            } else {
+              review.visibility = "hidden";
+              addPrivatePublicMetafield(
+                createPrivateMetafieldInput(
+                  item.node.id,
+                  JSON.stringify(review)
+                )
+              );
+              removePublicMetafield(createDeleteMetafieldInput(edge.node.id));
+            }
           },
         },
       ];
-
-      const review = JSON.parse(edge.node.value);
 
       return (
         <ResourceItem
@@ -102,6 +176,7 @@ const Index = () => {
           media={media}
           shortcutActions={shortcutActions}
           accessibilityLabel={`View details for ${edge.node.id}`}
+          persistActions
         >
           <Stack wrap={false}>
             <Stack.Item fill>
@@ -122,7 +197,7 @@ const Index = () => {
               </TextStyle>
             </Stack.Item>
             <Stack.Item>
-              <Badge status="success">Published</Badge>
+              <Badge status={publishedStatus}>{review.visibility}</Badge>
             </Stack.Item>
           </Stack>
         </ResourceItem>
@@ -153,9 +228,7 @@ const Index = () => {
         key={addMetafieldDialogOpen}
         open={addMetafieldDialogOpen}
         onCancel={() => setAddMetafieldDialogOpen(false)}
-        onClose={(rating, name, email, review, productId) =>
-          closeModel(rating, name, email, review, productId)
-        }
+        onClose={(data) => closeModel(data)}
       />
     </Page>
   );
