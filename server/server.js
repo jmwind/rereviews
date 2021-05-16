@@ -96,6 +96,12 @@ app.prepare().then(async () => {
     }
   );
 
+  router.post("/submitReview", async (ctx, next) => {
+    console.log(ctx);
+    ctx.res.statusCode = 200;
+    ctx.res.statusMessage = "Ok, got it!";
+  });
+
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
   router.get("(.*)", verifyRequest(), handleRequest); // Everything else must have sessions

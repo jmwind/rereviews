@@ -206,16 +206,15 @@ const Index = () => {
   };
 
   return (
-    <Page>
-      <TitleBar
-        title="ReReviews"
-        primaryAction={{
-          content: "Add review",
-          onAction: () => {
-            setAddMetafieldDialogOpen(true);
-          },
-        }}
-      />
+    <Page
+      title="Re-Reviews Sample App"
+      primaryAction={{
+        content: "Add review",
+        onAction: () => {
+          setAddMetafieldDialogOpen(true);
+        },
+      }}
+    >
       <Card>
         <ResourceList
           resourceName={resourceName}
