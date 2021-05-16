@@ -114,7 +114,8 @@ const Index = () => {
       const shortcutActions = [
         {
           icon: DeleteMajor,
-          accessibilityLabel: `Delete review`,
+          accessibilityLabel: "Delete review",
+          helpText: "Delete review",
           onAction: () => {
             setOperationRunning(true);
             if (metafield.node.__typename == "PrivateMetafield") {
@@ -138,6 +139,7 @@ const Index = () => {
         {
           icon: RefreshMajor,
           accessibilityLabel: "Toggle visibility",
+          helpText: "Toggle visibility",
           onAction: () => {
             setOperationRunning(true);
             if (metafield.node.__typename == "PrivateMetafield") {
