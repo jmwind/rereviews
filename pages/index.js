@@ -33,32 +33,25 @@ const Index = () => {
   const [operationRunning, setOperationRunning] = useState(false);
   const [addMetafieldDialogOpen, setAddMetafieldDialogOpen] = useState(false);
   const [addPublicMetafield] = useMutation(ADD_METAFIELDS_BY_ID, {
-    onCompleted: () => {
-      refetch();
-      setOperationRunning(false);
-    },
+    onCompleted: () => refreshData(),
   });
   const [addPrivatePublicMetafield] = useMutation(
     ADD_PRIVATE_METAFIELDS_BY_ID,
     {
-      onCompleted: () => {
-        refetch();
-        setOperationRunning(false);
-      },
+      onCompleted: () => refreshData(),
     }
   );
   const [removePublicMetafield] = useMutation(DELETE_METAFIELD_BY_ID, {
-    onCompleted: () => {
-      refetch();
-      setOperationRunning(false);
-    },
+    onCompleted: () => refreshData(),
   });
   const [removePrivateMetafield] = useMutation(DELETE_PRIVATE_METAFIELD_BY_ID, {
-    onCompleted: () => {
-      refetch();
-      setOperationRunning(false);
-    },
+    onCompleted: () => refreshData(),
   });
+
+  const refreshData = () => {
+    refetch();
+    setOperationRunning(false);
+  };
 
   const closeModel = useCallback((data) => {
     setAddMetafieldDialogOpen(false);
@@ -96,25 +89,25 @@ const Index = () => {
 
   console.log(data);
 
-  const renderItem = (item) => {
+  const renderItem = (product) => {
     const media = (
       <Thumbnail
         alt="pic"
         source={
-          item.node.featuredImage
-            ? item.node.featuredImage.originalSrc
+          product.node.featuredImage
+            ? product.node.featuredImage.originalSrc
             : "https://burst.shopifycdn.com/photos/black-leather-choker-necklace_373x@2x.jpg"
         }
       />
     );
 
     const reviews = [
-      ...item.node.metafields.edges,
-      ...item.node.privateMetafields.edges,
+      ...product.node.metafields.edges,
+      ...product.node.privateMetafields.edges,
     ];
 
-    return reviews.map((edge) => {
-      const review = JSON.parse(edge.node.value);
+    return reviews.map((metafield) => {
+      const review = JSON.parse(metafield.node.value);
       const publishedStatus =
         review.visibility === "published" ? "success" : "warning";
 
@@ -124,19 +117,21 @@ const Index = () => {
           accessibilityLabel: `Delete review`,
           onAction: () => {
             setOperationRunning(true);
-            if (edge.node.__typename == "PrivateMetafield") {
+            if (metafield.node.__typename == "PrivateMetafield") {
               removePrivateMetafield(
                 // TODO: the difference in APIs between private and public metafields
                 // is gross! We should pass in the id of the metafield. Docs are wrong
                 // you can't delete without the owning product id in the mutation.
                 createDeletePrivateMetafieldInput(
-                  item.node.id,
-                  edge.node.namespace,
-                  edge.node.key
+                  product.node.id,
+                  metafield.node.namespace,
+                  metafield.node.key
                 )
               );
             } else {
-              removePublicMetafield(createDeleteMetafieldInput(edge.node.id));
+              removePublicMetafield(
+                createDeleteMetafieldInput(metafield.node.id)
+              );
             }
           },
         },
@@ -144,27 +139,30 @@ const Index = () => {
           icon: RefreshMajor,
           accessibilityLabel: "Toggle visibility",
           onAction: () => {
-            if (edge.node.__typename == "PrivateMetafield") {
+            setOperationRunning(true);
+            if (metafield.node.__typename == "PrivateMetafield") {
               review.visibility = "published";
               addPublicMetafield(
-                createMetafieldInput(item.node.id, JSON.stringify(review))
+                createMetafieldInput(product.node.id, JSON.stringify(review))
               );
               removePrivateMetafield(
                 createDeletePrivateMetafieldInput(
-                  item.node.id,
-                  edge.node.namespace,
-                  edge.node.key
+                  product.node.id,
+                  metafield.node.namespace,
+                  metafield.node.key
                 )
               );
             } else {
               review.visibility = "hidden";
               addPrivatePublicMetafield(
                 createPrivateMetafieldInput(
-                  item.node.id,
+                  product.node.id,
                   JSON.stringify(review)
                 )
               );
-              removePublicMetafield(createDeleteMetafieldInput(edge.node.id));
+              removePublicMetafield(
+                createDeleteMetafieldInput(metafield.node.id)
+              );
             }
           },
         },
@@ -172,10 +170,10 @@ const Index = () => {
 
       return (
         <ResourceItem
-          id={edge.node.id}
+          id={metafield.node.id}
           media={media}
           shortcutActions={shortcutActions}
-          accessibilityLabel={`View details for ${edge.node.id}`}
+          accessibilityLabel={`View details for ${metafield.node.id}`}
           persistActions
         >
           <Stack wrap={false}>
