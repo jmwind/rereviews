@@ -25,6 +25,8 @@ import {
   createDeleteMetafieldInput,
   createPrivateMetafieldInput,
   createDeletePrivateMetafieldInput,
+  createMakeVisibleMetafieldInput,
+  MAKE_METAFIELD_VISIBLE_BY_ID,
 } from "./graphql";
 import { CreateReviewDialog } from "./newreview";
 
@@ -32,8 +34,23 @@ const Index = () => {
   const { loading, error, data, refetch } = useQuery(GET_PRODUCTS);
   const [operationRunning, setOperationRunning] = useState(false);
   const [addMetafieldDialogOpen, setAddMetafieldDialogOpen] = useState(false);
+  const [makeMetafieldVisibleOnStorefront] = useMutation(
+    MAKE_METAFIELD_VISIBLE_BY_ID
+  );
   const [addPublicMetafield] = useMutation(ADD_METAFIELDS_BY_ID, {
-    onCompleted: () => refreshData(),
+    onCompleted: (data) => {
+      console.log("add metafield: ");
+      console.log(data);
+      data.productUpdate.product.metafields.edges.map((metafield) => {
+        makeMetafieldVisibleOnStorefront(
+          createMakeVisibleMetafieldInput(
+            metafield.node.namespace,
+            metafield.node.key
+          )
+        );
+      });
+      refreshData();
+    },
   });
   const [addPrivatePublicMetafield] = useMutation(
     ADD_PRIVATE_METAFIELDS_BY_ID,

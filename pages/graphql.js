@@ -57,6 +57,22 @@ const ADD_METAFIELDS_BY_ID = gql`
   }
 `;
 
+const MAKE_METAFIELD_VISIBLE_BY_ID = gql`
+  mutation metafieldStorefrontVisibilityCreate(
+    $input: MetafieldStorefrontVisibilityInput!
+  ) {
+    metafieldStorefrontVisibilityCreate(input: $input) {
+      metafieldStorefrontVisibility {
+        id
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
+
 const DELETE_METAFIELD_BY_ID = gql`
   mutation metafieldDelete($input: MetafieldDeleteInput!) {
     metafieldDelete(input: $input) {
@@ -119,6 +135,18 @@ const createMetafieldInput = (id, value) => {
   };
 };
 
+const createMakeVisibleMetafieldInput = (namespace, key) => {
+  return {
+    variables: {
+      input: {
+        namespace: namespace,
+        key: key,
+        ownerType: "PRODUCT",
+      },
+    },
+  };
+};
+
 const createPrivateMetafieldInput = (id, value) => {
   const uuidv4 = Math.random().toString(36).substring(7);
   return {
@@ -165,10 +193,12 @@ const createDeletePrivateMetafieldInput = (id, namespace, key) => {
 export {
   GET_PRODUCTS,
   ADD_METAFIELDS_BY_ID,
+  MAKE_METAFIELD_VISIBLE_BY_ID,
   DELETE_METAFIELD_BY_ID,
   ADD_PRIVATE_METAFIELDS_BY_ID,
   DELETE_PRIVATE_METAFIELD_BY_ID,
   createMetafieldInput,
+  createMakeVisibleMetafieldInput,
   createPrivateMetafieldInput,
   createDeleteMetafieldInput,
   createDeletePrivateMetafieldInput,
